@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<section class="bg-dark text-light text-center shadow mb-20">
+    <div class="container p-5 bg-dark">
+        <div class="row">
+            <div class="d-md-flex bg-dark align-items-center justify-content-evenly">
+                <h1 class="text-center">{{ current_user.first_name }}'s User Profile Information:</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="text-center">
+    <div class="container">
+        <h3>Here are your profile credentials {{ current_user.first_name }}:</h3>
+        <ul class="list-group">
+            <li class="list-group-item">Email: {{ current_user.email }} </li>
+            <li class="list-group-item">Token: {{ current_user.token }} </li>
+        </ul>
+    </div>
+</section>
+<div class="row justify-content-evenly align-items-center" style="margin-top: 20px;">
+    <div class="col-4">
+        <div class="col-3 p-10 pl-10">
+            Insert Image Here
+        </div>
+    </div>
+</div>
+{% endblock %}
