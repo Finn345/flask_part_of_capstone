@@ -1,41 +1,49 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.models import User, db, check_password_hash
-from app.signupforms import UserSignUpForm
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.signinforms import UserLoginForm
-
-from flask_login import login_user, logout_user, LoginManager, current_user, login_required
+from app.signupforms import UserSignUpForm
+from app.models import User, db, check_password_hash
+from flask_login import login_user, logout_user
+from sqlalchemy.exc import SQLAlchemyError
+import jwt
+import os
 
 auth = Blueprint('auth', __name__, template_folder='auth_templates')
 
-@auth.route('/signup', methods=['GET', 'POST'])
+def extract_email_from_token(token):
+    # Your logic to extract user information from the token
+    # For now, let's assume the token is a simple string, and we extract email directly
+    return token
+
+@auth.route('/signup', methods=['POST'])
 def sign_up():
-    form = UserSignUpForm()
-
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            email = form.email.data
-            password = form.password.data
-            first_name = form.first_name.data
-            last_name = form.last_name.data
+        data = request.get_json()
+        token = data.get('token')
 
-            existing_user = User.query.filter_by(email=email).first()
+        print(f"Received token: {token}")
 
-            if existing_user:
-                flash('Email already registered. Please use a different email or log in.', 'user-exists')
-                return redirect(url_for('auth.sign_up'))
+        user_email = extract_email_from_token(token)
 
-            user = User(email=email, password=password, first_name=first_name, last_name=last_name)
-            db.session.add(user)
-            db.session.commit()
+        print(f"Extracted user email: {user_email}")
+        
+        existing_user = User.query.filter_by(email=user_email).first()
+        if existing_user:
+            return jsonify({'message': 'User already exists'}), 400
 
-            flash(f'Account created successfully for {email}. Welcome!', 'user-created')
-            return redirect(url_for('site.home'))
-    except:
-        raise Exception('Invalid data has been entered: Please check the data entered')
-    
-    return render_template('signup.html', form=form)
+        # Create a new user based on token information
+        new_user = User(email=user_email)
+        db.session.add(new_user)
+        db.session.commit()
 
-from sqlalchemy.exc import SQLAlchemyError
+        # Generates a token for Firebase Authentication
+        payload = {"uid": str(new_user.id)}
+        token = jwt.encode(payload, os.environ.get('44b5ece20e4ff45341d9b54d1c0fe3b30deca38f'), algorithm='HS256')
+
+        return jsonify({'message': 'User created successfully', 'token': token}), 200
+
+    except Exception as e:
+        print(f"Error processing token: {e}")
+        return jsonify({'message': 'Error processing token'}), 400
 
 @auth.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -46,7 +54,7 @@ def signin():
             email = form.email.data
             password = form.password.data
             
-            logged_user = User.query.filter(User.email == email).first()
+            logged_user = User.query.filter_by(email=email).first()
             if logged_user and check_password_hash(logged_user.password, password):
                 login_user(logged_user)
                 flash('Welcome', 'auth-success')

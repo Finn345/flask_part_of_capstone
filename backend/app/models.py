@@ -7,6 +7,7 @@ import secrets
 from flask_login import UserMixin
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
+from flask_jwt_extended import create_access_token
 
 login_manager = LoginManager()
 ma = Marshmallow()
@@ -25,9 +26,9 @@ class User(db.Model, UserMixin):
     g_auth_verify = db.Column(db.Boolean, default=False)
     token = db.Column(db.String, unique=True, default='')
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    project = db.relationship('Project', backref='owner', lazy=True)
-    
-    def __init__(self, email, first_name='', last_name='', id='', password='', token='', g_auth_verify=False):
+    projects = db.relationship('Project', backref='owner', lazy=True)
+
+    def __init__(self, email, first_name='', last_name='', password='', g_auth_verify=False):
         self.id = self.set_id()
         self.email = email
         self.first_name = first_name
@@ -35,23 +36,20 @@ class User(db.Model, UserMixin):
         self.password = self.set_password(password)
         self.token = self.set_token(10)
         self.g_auth_verify = g_auth_verify
-        
+
     def set_token(self, length):
-        return secrets.token_hex(length)
-    
+        return create_access_token(identity=str(self.id), expires_delta=False)
+
     def set_id(self):
-        return str(uuid.uuid4())
-    
+        return secrets.token_hex(8)
+
     def set_password(self, password):
-        self.pw_hash = generate_password_hash(password)
-        return self.pw_hash
-    
+        self.password = generate_password_hash(password)
+        return self.password
+
     def _repr__(self):
         return f"Welcome! {self.first_name} User {self.email} has been added to the database."
     
-import secrets
-from app.models import db, ma, User
-
 class Project(db.Model):
     id = db.Column(db.String, primary_key=True)
     name = db.Column(db.String(150), nullable=False, default='')
