@@ -1,13 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-import uuid 
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 from flask_login import UserMixin
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_jwt_extended import create_access_token
+from werkzeug.security import generate_password_hash, check_password_hash
+import datetime
 
 login_manager = LoginManager()
 ma = Marshmallow()
@@ -19,8 +17,8 @@ def load_user(user_id):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.String, primary_key=True)
-    first_name = db.Column(db.String(150), nullable=True, default='')
-    last_name = db.Column(db.String(150), nullable=True, default='')
+    first_name = db.Column(db.String(150), nullable=False, default='')
+    last_name = db.Column(db.String(150), nullable=False, default='')
     email = db.Column(db.String(150), nullable=False, unique=True, default='')
     password = db.Column(db.String(150), nullable=False, default='')
     g_auth_verify = db.Column(db.Boolean, default=False)
@@ -29,16 +27,18 @@ class User(db.Model, UserMixin):
     projects = db.relationship('Project', backref='owner', lazy=True)
 
     def __init__(self, email, first_name='', last_name='', password='', g_auth_verify=False):
-        self.id = self.set_id()
+        self.id = secrets.token_hex(8)
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
-        self.password = self.set_password(password)
-        self.token = self.set_token(10)
+        self.password = generate_password_hash(password)
+        self.token = create_access_token(identity=str(self.id), expires_delta=False)
         self.g_auth_verify = g_auth_verify
 
     def set_token(self, length):
-        return create_access_token(identity=str(self.id), expires_delta=False)
+        token = create_access_token(identity=str(self.id), expires_delta=False)
+        self.token = token
+        return token
 
     def set_id(self):
         return secrets.token_hex(8)
@@ -47,9 +47,12 @@ class User(db.Model, UserMixin):
         self.password = generate_password_hash(password)
         return self.password
 
-    def _repr__(self):
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def __repr__(self):
         return f"Welcome! {self.first_name} User {self.email} has been added to the database."
-    
+
 class Project(db.Model):
     id = db.Column(db.String, primary_key=True)
     name = db.Column(db.String(150), nullable=False, default='')
@@ -69,10 +72,10 @@ class Project(db.Model):
         self.user_token = user_token
 
     def __repr__(self):
-        return f"The project {self.name} has been added, thanks!"
+        return f"The project {self.name} has been added"
 
     def set_id(self):
-        return secrets.token_urlsafe()
+        return(secrets.token_urlsafe())
 
 class ProjectSchema(ma.Schema):
     class Meta:
