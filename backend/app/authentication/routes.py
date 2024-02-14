@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import uuid4
 import re
 
-auth = Blueprint('api', __name__, template_folder='auth_templates')
+auth = Blueprint('api', __name__, template_folder='auth_templates', url_prefix='api')
 
 from flask import Flask, request, jsonify
 from models import User, db
