@@ -10,21 +10,24 @@ def getdata(current_user_data):
     return{ 'A': 'Value' }
 
 @api.route('/user', methods=['POST'])
-def create_user(current_user_data):
+@token_required
+def create_user():
     first_name = request.json['first_name']
     last_name = request.json['last_name']
     email = request.json['email']
     password = request.json['password']
-    
+
     user = User(
         first_name=first_name,
         last_name=last_name,
         email=email,
         password=password
     )
-    
-    db.commit(user)
-    db.session()
+
+    db.session.add(user)
+    db.commit()
+
+    return jsonify({'message': 'User created successfully.'}), 201
     
 
 @api.route('/projects', methods=['POST'])
