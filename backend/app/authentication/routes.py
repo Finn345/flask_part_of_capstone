@@ -14,7 +14,7 @@ from models import User, db
 
 app = Flask(__name__)
 
-@app.route('/user', methods=['POST'])
+@auth.route('/user', methods=['POST'])
 def signup():
     data = request.get_json()
     if not data or 'email' not in data or 'password' not in data or 'firstName' not in data or 'lastName' not in data:
