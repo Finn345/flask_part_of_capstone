@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.helpers import token_required
 from app.models import db, User, Project, project_schema, projects_schema
+from flask_cors import cross_origin
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
@@ -10,8 +11,8 @@ def getdata(current_user_data):
     return{ 'A': 'Value' }
 
 @api.route('/user', methods=['POST'])
-@token_required
-def create_user():
+@cross_origin()
+def create_user(current_user_data):
     first_name = request.json['first_name']
     last_name = request.json['last_name']
     email = request.json['email']
