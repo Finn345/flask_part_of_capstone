@@ -32,4 +32,4 @@ ma.init_app(app)
 
 app.json_encoder = JSONEncoder
 
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
