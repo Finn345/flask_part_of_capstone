@@ -7,14 +7,14 @@ from sqlalchemy.exc import SQLAlchemyError
 import uuid4
 import re
 
-auth = Blueprint('auth', __name__, template_folder='auth_templates')
+auth = Blueprint('api', __name__, template_folder='auth_templates')
 
 from flask import Flask, request, jsonify
 from models import User, db
 
 app = Flask(__name__)
 
-@app.route('/signup', methods=['POST'])
+@app.route('/user', methods=['POST'])
 def signup():
     data = request.get_json()
     if not data or 'email' not in data or 'password' not in data or 'firstName' not in data or 'lastName' not in data:
