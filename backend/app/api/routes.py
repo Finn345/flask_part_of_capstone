@@ -12,6 +12,7 @@ def getdata(current_user_data):
 
 @api.route('/user', methods=['POST'])
 @cross_origin()
+@token_required
 def create_user(current_user_data):
     first_name = request.json['first_name']
     last_name = request.json['last_name']
