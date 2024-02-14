@@ -1,51 +1,32 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.signinforms import UserLoginForm
 from app.signupforms import UserSignUpForm
-from app.models import User, db, check_password_hash
+from app.models import User, db, check_password_hash, generate_password_hash
 from flask_login import login_user, logout_user
 from sqlalchemy.exc import SQLAlchemyError
-import uuid
+import uuid4
+import re
 
 auth = Blueprint('auth', __name__, template_folder='auth_templates')
 
-@auth.route('/signup', methods=['POST'])
-def sign_up():
-    try:
-        data = request.get_json()
-        user_data = data.get('user')
+from flask import Flask, request, jsonify
+from models import User, db
 
-        if not user_data:
-            return jsonify({'error': 'No user data provided'}), 400
+app = Flask(__name__)
 
-        user_email = user_data.get('email')
-        user_password = user_data.get('password')
-        user_first_name = user_data.get('firstName')
-        user_last_name = user_data.get('lastName')
-
-        if not user_email or not user_password or not user_first_name or not user_last_name:
-            return jsonify({'error': 'Email, password, first name, and last name are required'}), 400
-
-        existing_user = User.query.filter_by(email=user_email).first()
-        if existing_user:
-            return jsonify({'error': 'User already exists'}), 400
-
-        new_user = User(
-            id=str(uuid.uuid4()),
-            email=user_email,
-            password=check_password_hash(user_password),
-            first_name=user_first_name,
-            last_name=user_last_name
-        )
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        return jsonify({'message': 'User created successfully'}), 200
-
-    except Exception as e:
-        print(f"Error processing sign-up request: {e}")
-        db.session.rollback()
-        return jsonify({'error': 'An error occurred during sign-up'}), 500
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    if not data or 'email' not in data or 'password' not in data or 'firstName' not in data or 'lastName' not in data:
+        return jsonify({'error': 'All fields are required.'}), 400
+    if not re.match(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$', data['email']):
+        return jsonify({'error': 'Please enter a valid email address.'}), 400
+    if len(data['password']) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters long.'}), 400
+    user = User(id=str(uuid4()), email=data['email'], password=generate_password_hash(data['password']), firstName=data['firstName'], lastName=data['lastName'])
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({'message': 'User created successfully.'}), 201
 
 @auth.route('/signin', methods=['GET', 'POST'])
 def signin():
