@@ -91,3 +91,6 @@ def delete_project(current_user_token, id):
     db.session.commit()
     response = project_schema.dump(project)
     return jsonify(response)
+
+if __name__ == '__main__':
+    api.run(debug=True)
