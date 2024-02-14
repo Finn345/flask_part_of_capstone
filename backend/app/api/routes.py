@@ -9,6 +9,24 @@ api = Blueprint('api', __name__, url_prefix='/api')
 def getdata(current_user_data):
     return{ 'A': 'Value' }
 
+@api.route('/user', methods=['POST'])
+def create_user(current_user_data):
+    first_name = request.json['first_name']
+    last_name = request.json['last_name']
+    email = request.json['email']
+    password = request.json['password']
+    
+    user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=password
+    )
+    
+    db.commit(user)
+    db.session()
+    
+
 @api.route('/projects', methods=['POST'])
 @token_required
 def create_project(current_user_token):

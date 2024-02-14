@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="bg-dark text-light text-center shadow">
+    <div class="container p-5 bg-dark">
+        <div class="row">
+            <div class="d-md-flex bg-dark text-light align-items-center justify-content-evenly">
+                <h1 class="col text-center">Welcome to My Final Project</h1>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="bg-light text-center">
+    <div class="container p-5">
+        <div class="d-flex align-items-ceonter justify-content-center">
+            <h1>Insert Image Here</h1>
+        </div>
+    </div>
+</section>
+{% if current_user.is_authenticated %}
+<section class="bg-light text-dark">
+    <div class="container p-5">
+        <h2>Projects {{ user_first_name }} has submitted:</h2>
+        <ul>
+            {% for project in projects %}
+                <li>{{ project.name }} - {{ project.language_to_use }} - {{ project.description }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}
